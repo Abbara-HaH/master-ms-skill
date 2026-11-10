@@ -1,0 +1,15 @@
+{
+  "name": "master-ms-skill",
+  "description": "Claude Code plugins for master's thesis research and review workflows.",
+  "owner": {
+    "name": "Abbara-HaH"
+  },
+  "plugins": [
+    {
+      "name": "ma-thesis",
+      "source": "./ma-thesis",
+      "description": "Arabic master's thesis research, integrity, verification, and review workflows.",
+      "version": "1.0.0"
+    }
+  ]
+}

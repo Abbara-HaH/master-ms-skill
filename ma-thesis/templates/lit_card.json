@@ -1,0 +1,57 @@
+{
+ "_comment": "بطاقة دراسة سابقة. كل حقل بموضعه في الصفحة، بإعادة صياغة لا نقل. «لم يرد في النص» حين لا يوجد الحقل (لا تخمين). تُملأ من مخرج المتحقق V4.",
+ "id": "L01",
+ "source_id": "S01",
+ "relevance": "main | supporting | excluded",
+ "relevance_reason": "المتغير الرئيس المشترك + السياق/المجتمع المشترك؛ أو سبب الاستبعاد",
+ "citation_apa_guide_style": "الكنية، الاسم. (السنة). العنوان. الناشر/المجلة. (تُبنى من سجل sources فقط)",
+ "title_original": "",
+ "title_ar_review": {
+  "text": "",
+  "status": "تحتاج مراجعة"
+ },
+ "country_or_context": {
+  "text": "",
+  "page": ""
+ },
+ "goal": {
+  "text": "",
+  "page": ""
+ },
+ "method": {
+  "text": "",
+  "page": ""
+ },
+ "sample": {
+  "text": "",
+  "page": ""
+ },
+ "instrument": {
+  "text": "",
+  "page": ""
+ },
+ "results": {
+  "text": "",
+  "page": ""
+ },
+ "conclusion": {
+  "text": "",
+  "page": "",
+  "_note": "حقل سادس يُستخرج للتحقق، لا يدخل فقرة العرض بالضرورة"
+ },
+ "comparison": {
+  "agrees_with_researcher": {
+   "text": "",
+   "page": ""
+  },
+  "differs_from_researcher": {
+   "text": "",
+   "page": ""
+  },
+  "researcher_distinction": "[الباحث: ما تتميز به دراستك عن هذه الدراسة]",
+  "use_for_researcher": {
+   "text": ""
+  }
+ },
+ "verified_on": ""
+}

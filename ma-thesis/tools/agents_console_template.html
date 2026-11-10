@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="ar" dir="rtl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>وكلاء ma-thesis المعزولون</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#faf9f6;--fg:#1f1d1a;--mut:#6b665e;--card:#fff;--bd:#dedad2;--ac:#2f5d50;--red:#b3261e;--amb:#a65f00;--grn:#1b6e3c;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#171614;--fg:#ece9e2;--mut:#a29c92;--card:#211f1c;--bd:#3a3732;--ac:#7fbfae;--red:#ff8a80;--amb:#ffb74d;--grn:#7fd39b;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#171614;--fg:#ece9e2;--mut:#a29c92;--card:#211f1c;--bd:#3a3732;--ac:#7fbfae;--red:#ff8a80;--amb:#ffb74d;--grn:#7fd39b;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.75 system-ui,"Segoe UI",Tahoma,Arial,sans-serif}
+main{max-width:720px;margin:0 auto;padding:16px}
+h1{font-size:1.25rem;margin:.2em 0}.mut{color:var(--mut);font-size:.9rem}
+nav{display:flex;gap:6px;margin:12px 0}
+nav button{flex:1;padding:10px 4px;border:1px solid var(--bd);background:var(--card);color:var(--fg);border-radius:10px;font:inherit}
+nav button[aria-selected=true]{background:var(--ac);color:var(--bg);border-color:var(--ac)}
+label{display:block;margin:10px 0 4px;font-weight:600;font-size:.92rem}
+textarea,input,select{width:100%;box-sizing:border-box;padding:9px;border:1px solid var(--bd);border-radius:8px;background:var(--card);color:var(--fg);font:inherit}
+textarea{min-height:130px;resize:vertical}textarea.s{min-height:64px}
+.go{margin-top:14px;padding:11px 18px;border:0;border-radius:10px;background:var(--ac);color:var(--bg);font:inherit;font-weight:700}
+.go[disabled]{opacity:.5}
+.card{border:1px solid var(--bd);background:var(--card);border-radius:12px;padding:12px;margin:10px 0}
+.b{display:inline-block;padding:1px 9px;border-radius:99px;border:1px solid currentColor;font-size:.82rem;margin-inline-end:6px}
+.red{color:var(--red)}.amb{color:var(--amb)}.grn{color:var(--grn)}
+blockquote{margin:6px 0;padding:4px 10px;border-inline-start:3px solid var(--bd);color:var(--mut)}
+details{margin-top:12px}pre{white-space:pre-wrap;word-break:break-word;overflow-x:auto;font-size:.8rem;direction:ltr;text-align:left}
+</style></head><body><main>
+<h1>وكلاء ma-thesis المعزولون</h1>
+<p class="mut">كل تشغيل بلا ذاكرة: الوكيل لا يرى المحادثة ولا مسودتك، بل ما تلصقه هنا فقط. لا وصول إلى الإنترنت داخل هذه الصفحة؛ لذا يحكم المتحقق على النص الذي تلصقه، ولا يستطيع تأكيد V1 وV2.</p>
+<nav id="tabs"></nav><div id="form"></div><div id="out" aria-live="polite"></div>
+</main>
+<script>
+const AG=/*AGENTS*/{};
+const CRIT="أصالة الموضوع؛ صياغة المشكلة والأهداف والأسئلة والفرضيات؛ دقة تحديد الأدوات وتصميمها؛ دقة اختبار الخصائص السيكومترية؛ التوثيق العلمي والأمانة ومطابقة المراجع وتنوعها وحداثتها؛ دقة تحديد المجتمع وسحب العينة ونوعها ومعيار حجمها؛ جودة الطباعة واللغة؛ الالتزام بالدليل؛ دقة تفسير النتائج والاختبارات الإحصائية؛ المقترحات؛ ارتباط العنوان بالمضمون وإظهار شخصية الباحث";
+const FM="M1 مراجع مختلقة؛ M2 ادعاءات لا تطابق مصدرها؛ M3 أرقام بلا مصدر بيانات؛ M4 اختلاق منهجي؛ M5 تعميم يفوق الأدلة؛ M6 تناقض داخلي بين الفصول؛ M7 أسلوب آلي مكشوف؛ T1 سلسلة: العنوان ← المشكلة ← الأهداف ← الأسئلة ← المتغيرات ← الفرضيات ← الأدوات ← الإحصاء ← النتائج. الحكم: BLOCKED عند M1 أو M3 أو M4 أو M2 مؤكد؛ SUSPECTED عند M2 غير حاسم أو M5 أو M6 أو انقطاع T1 أو M7 أحمر؛ وإلا CLEAR.";
+const ADD={critic:"",integrity:"",verifier:"\n\nملاحظة تشغيل: لا أدوات ولا إنترنت في هذا التشغيل. لا تنفّذ V1 وV2 (سجّلهما «لم يُفحَص» ولا تخمّن بياناً)، فلا يمكن أن تكون الحالة verified. نفّذ V3 وV4 وV5 وV6 على النص الملصوق فقط، وإن لم تجد رقم صفحة في النص فاكتب «غير مذكور» ولا تخمّنه."};
+const TABS={critic:"الناقد",integrity:"النزاهة",verifier:"المتحقق"};
+const FIELDS={
+critic:[["text","النص المراد نقده (فصل أو أكثر)","a"]],
+integrity:[["stage","البوابة","s"],["text","النص (الفصول الثلاثة الأولى في G-A، والكل في G-B)","a"],["snap","لقطة الجواز JSON: sources وclaims وdata_registry وdecisions (اختياري)","a2"]],
+verifier:[["cited","المرجع كما كتبه الباحث","i"],["claim","الادعاء المنسوب إليه","a2"],["page","الصفحة المنسوبة","i"],["src","نص المصدر الملصوق (من PDF، بأرقام الصفحات إن وُجدت)","a"]]};
+const SEV={critical:["red","حرج"],major:["amb","جسيم"],minor:["mut","طفيف"]};
+const VERD={CLEAR:"grn",SUSPECTED:"amb",BLOCKED:"red"};
+const STAT={verified:"grn",partial:"amb",needs_user_text:"amb",unverifiable:"amb",rejected:"red",candidate:"mut"};
+let tab="critic",last=null,busy=false;
+const $=id=>document.getElementById(id);
+function h(t,a,...k){const e=document.createElement(t);for(const[x,v]of Object.entries(a||{}))x==="class"?e.className=v:e.setAttribute(x,v);for(const c of k.flat())if(c!=null)e.append(c.nodeType?c:String(c));return e}
+function tabs(){const n=$("tabs");n.replaceChildren(...Object.entries(TABS).map(([k,v])=>{const b=h("button",{type:"button","aria-selected":k===tab},v);b.onclick=()=>{tab=k;last=null;tabs();form();$("out").replaceChildren()};return b}))}
+function form(){const f=$("form");f.replaceChildren(...FIELDS[tab].map(([id,l,t])=>{const i=t==="a"||t==="a2"?h("textarea",{id,class:t==="a2"?"s":""}):t==="s"?h("select",{id},h("option",{value:"G-A"},"G-A بعد الفصول الثلاثة الأولى"),h("option",{value:"G-B"},"G-B قبل التسليم")):h("input",{id});return h("div",{},h("label",{for:id},l),i)}),h("button",{class:"go",id:"go",type:"button"},"تشغيل الوكيل"));$("go").onclick=()=>run()}
+const val=id=>($(id)||{}).value||"";
+function build(){if(tab==="critic")return{mode:"objections",text:val("text"),criteria:CRIT,failure_modes:FM};
+if(tab==="integrity"){let s={};try{s=val("snap").trim()?JSON.parse(val("snap")):{}}catch(e){throw new Error("لقطة الجواز ليست JSON صالحاً")}return{stage:val("stage"),text:{body:val("text")},passport_snapshot:s,style_lint:null,failure_modes:FM}}
+return{source:{cited_as:val("cited")},claim:{text:val("claim")||null,page:val("page")||null,is_quote:false},policy:{level:"master"},pasted_source_text:val("src")}}
+function parse(t){t=t.replace(/```(?:json)?/g,"");const a=t.indexOf("{"),b=t.lastIndexOf("}");return JSON.parse(t.slice(a,b+1))}
+async function call(inp){const s=await claude.use("sample");if(!s)throw new Error("القدرة غير متاحة في هذا العرض (سجّل الدخول من claude.ai)");
+const p=AG[tab]+ADD[tab]+"\n\n---\nالمدخل (JSON):\n"+JSON.stringify(inp)+"\n\nأخرج JSON صالحاً فقط بلا أي نص خارجه.";
+const r=await s(p,{modelTier:tab==="verifier"?"default":"complex",cache:false});return{raw:r.text,data:parse(r.text),trunc:r.truncated}}
+async function run(replies){if(busy)return;const o=$("out"),g=$("go");let inp;try{inp=build()}catch(e){o.replaceChildren(h("p",{class:"red"},e.message));return}
+if(!FIELDS[tab].some(([id,,t])=>t!=="s"&&val(id).trim())){o.replaceChildren(h("p",{class:"amb"},"أدخل النص أولاً."));return}
+if(replies){inp.mode="assess_replies";inp.objections_so_far=last.objections;inp.replies=replies}
+busy=true;g.disabled=true;o.replaceChildren(h("p",{class:"mut"},"يعمل الوكيل… قد يستغرق دقيقة."));
+try{const r=await call(inp);render(r,!!replies)}catch(e){o.replaceChildren(h("p",{class:"red"},"تعذّر التشغيل: "+(e.message||e.code||"خطأ")+(e.text?" (نص جزئي متاح)":"")))}finally{busy=false;g.disabled=false}}
+function badge(c,t){return h("span",{class:"b "+c},t)}
+function list(t,a){return a&&a.length?h("div",{class:"card"},h("strong",{},t),h("ul",{},a.map(x=>h("li",{},typeof x==="string"?x:JSON.stringify(x))))):null}
+function render(r,second){const d=r.data,o=$("out"),k=[];
+if(r.trunc)k.push(h("p",{class:"amb"},"تنبيه: الرد قُطع؛ قلّص المدخل وأعد المحاولة."));
+if(tab==="critic"){if(!second)last=d;
+(d.objections||[]).slice().sort((a,b)=>"critical major minor".indexOf(a.severity)-"critical major minor".indexOf(b.severity)).forEach(x=>{const s=SEV[x.severity]||["mut",x.severity];
+k.push(h("div",{class:"card"},badge(s[0],s[1]),h("strong",{},(x.id||"")+" — "+(x.where||"")),x.evidence?h("blockquote",{},x.evidence):null,h("div",{},x.problem),x.what_would_resolve?h("div",{class:"mut"},"يرفعه: "+x.what_would_resolve):null,second?null:h("textarea",{class:"s","data-id":x.id,placeholder:"ردّك بدليل (اتركه فارغاً لتجاهل الاعتراض)"})))});
+(d.reply_assessments||[]).forEach(x=>k.push(h("div",{class:"card"},badge(x.decision==="stands"?"red":"grn",x.decision),h("strong",{},x.objection_id+" — تقييم الرد "+x.score+"/5"),h("div",{},x.justification))));
+if(!second&&(d.objections||[]).length){const b=h("button",{class:"go",type:"button"},"قيّم ردودي");b.onclick=()=>{const rp=[...document.querySelectorAll("textarea[data-id]")].filter(t=>t.value.trim()).map(t=>({objection_id:t.dataset.id,reply:t.value}));if(rp.length)run(rp)};k.push(b)}
+k.push(list("ثغرات السلسلة",d.chain_gaps),list("لم يُقدَّر",d.could_not_assess))}
+else if(tab==="integrity"){k.push(h("div",{class:"card"},badge(VERD[d.verdict]||"mut",d.verdict||"؟"),h("span",{class:"mut"},d.counts?JSON.stringify(d.counts):"")));
+(d.findings||[]).forEach(x=>k.push(h("div",{class:"card"},badge(x.severity==="blocking"?"red":"amb",x.mode),h("strong",{},x.where||""),x.evidence?h("blockquote",{},x.evidence):null,h("div",{},x.reason),x.needs?h("div",{class:"mut"},"يلزم: "+x.needs):null)));
+k.push(list("السلسلة",(d.chain||[]).map(c=>(c.ok?"✔ ":"✘ ")+c.link+(c.gap?" — "+c.gap:""))),list("لم يُفحَص",d.could_not_check))}
+else{k.push(h("div",{class:"card"},badge(STAT[d.status]||"mut",d.status||"؟"),h("div",{},d.reason||"")));
+k.push(list("الفحوص",Object.entries(d.checks||{}).map(([a,b])=>a+": "+(b&&b.ok===true?"✔":b&&b.ok===false?"✘":"·")+" "+(b&&(b.note||b.reason||b.page)||""))));
+k.push(list("الحقول المستخرجة",Object.entries(d.fields||{}).map(([a,b])=>a+": "+((b&&b.text)||"—")+(b&&b.page?" (ص "+b.page+")":""))),list("لم يُتحقَّق منه",d.could_not_verify))}
+k.push(h("details",{},h("summary",{},"JSON الخام"),h("pre",{},JSON.stringify(d,null,1))));
+o.replaceChildren(...k.filter(Boolean))}
+tabs();form();
+</script></body></html>

@@ -3,7 +3,7 @@
 """passport.py — «الجواز»: حالة المشروع في شظايا JSON تُقرأ بالمفتاح (اقتصاد التوكن).
 
 الاستخدام:  passport.py [--dir passport] COMMAND ...
-  init  --title T --type quantitative|qualitative|mixed|theoretical [--discipline D]
+  init  --title T (--type|--study-type) quantitative|qualitative|mixed|theoretical [--discipline D]
   show                                  ملخص الفهرس فقط
   meta  [--set key=value ...]           قراءة/تعديل بيانات الفهرس (stage, title, ...)
   read  FRAG [--key K]                  قراءة شظية أو مفتاح منها
@@ -507,7 +507,12 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--dir", default="passport")
     sp = ap.add_subparsers(dest="cmd", required=True)
-    s = sp.add_parser("init"); s.add_argument("--title", required=True); s.add_argument("--type", required=True, choices=["quantitative", "qualitative", "mixed", "theoretical"]); s.add_argument("--discipline")
+    s = sp.add_parser("init")
+    s.add_argument("--title", required=True)
+    study_type = s.add_mutually_exclusive_group(required=True)
+    study_type.add_argument("--type", dest="type", choices=["quantitative", "qualitative", "mixed", "theoretical"])
+    study_type.add_argument("--study-type", dest="type", choices=["quantitative", "qualitative", "mixed", "theoretical"])
+    s.add_argument("--discipline")
     sp.add_parser("show")
     s = sp.add_parser("meta"); s.add_argument("--set", action="append")
     s = sp.add_parser("read"); s.add_argument("frag"); s.add_argument("--key")

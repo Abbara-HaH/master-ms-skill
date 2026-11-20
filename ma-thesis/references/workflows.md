@@ -144,7 +144,7 @@
 
 ## `format`
 
-`format_check.py FILE [--kind thesis|plan|abstract] [--registry passport/data_registry.json]` ثم اعرض النتائج؛ الخطوط والهوامش والتباعد وترقيم الصفحات تُراجع يدوياً في Word (G03:158–165). ثم `style_lint.py` على كل قسم. وتحقق من كل مسار ذُكر.
+`format_check.py FILE [--kind thesis|plan|abstract] [--registry passport/data_registry.json] [--final]` ثم اعرض النتائج؛ الخطوط والهوامش والتباعد وترقيم الصفحات تُراجع يدوياً في Word (G03:158–165). `--final` إلزامي قبل تسليم نسخة نهائية حتى تجعل H16 فحصاً حازماً. ثم `style_lint.py` على كل قسم. وتحقق من كل مسار ذُكر.
 
 ## التسليم النهائي
 

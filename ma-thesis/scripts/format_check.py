@@ -239,7 +239,7 @@ def check_refs(text, rep):
 
 def check_citation_section_rules(text, rep):
     """H13/H14/H15: يمنع الاستشهادات في الأقسام المحميّة وتكرار المصدر نفسه داخل فقرة قصيرة."""
-    protected = ("مشكلة", "المشكلة", "مقدمة", "اهمية", "الأهمية", "اهداف", "الأهداف", "اسئلة", "الأسئلة",
+    protected = ("مشكلة", "المشكلة", "مقدمة", "المقدمة", "الاهمية", "الأهمية", "اهداف", "الأهداف", "اسئلة", "الأسئلة",
                  "فرضيات", "الفرضيات", "الحدود", "حدود", "الخاتمة", "التوصيات", "ملخص")
     found = []
     repeated = []
@@ -277,13 +277,13 @@ def check_citation_section_rules(text, rep):
             "H14")
 
 
-def check_gap_protocol(text, kind, rep):
+def check_gap_protocol(text, kind, final, rep):
     """H16: في ناتج نهائي لا يُترك فراغ مفتوح دون سؤال وحزمة مكتملة في المحادثة."""
     ph = PLACE.findall(text)
     if not ph:
         rep.add("OK", "الفراغات (H16)", "لا فراغات موسومة مفتوحة", "H16")
         return
-    if kind == "thesis":
+    if kind == "thesis" and final:
         rep.add("ERROR", "الفراغات (H16)",
                 "%d فراغاً مفتوحاً في مخرج نهائي؛ يسأل الباحث عنها أو يسجّلها كقيد معلن قبل التسليم" % len(ph),
                 "H16")
@@ -349,6 +349,7 @@ def main():
     ap.add_argument("--kind", choices=["thesis", "plan", "abstract"], default="thesis")
     ap.add_argument("--title")
     ap.add_argument("--json", action="store_true")
+    ap.add_argument("--final", action="store_true", help="معاملة المسودة كمخرج نهائي؛ أي فراغ مفتوح خطأ تسليم")
     ap.add_argument("--registry", help="passport/data_registry.json لفحص H2: أرقام النص مقابل ما قدمه الباحث")
     a = ap.parse_args()
     try:
@@ -369,7 +370,7 @@ def main():
     if a.registry:
         check_numbers(text, a.registry, rep)
     ph = len(PLACE.findall(text))
-    check_gap_protocol(text, a.kind, rep)
+    check_gap_protocol(text, a.kind, a.final, rep)
     err = sum(1 for i in rep.items if i["level"] == "ERROR")
     out = {"status": "FAIL" if err else "PASS", "errors": err, "items": rep.items,
            "note": "فحص تقريبي للنص المكتوب؛ الخطوط والهوامش والتباعد وترقيم الصفحات تُراجع يدوياً في Word (G03:158–165)."}

@@ -180,7 +180,8 @@ def cmd_init(p, a):
     if p.ipath.exists():
         raise PassportError("الجواز موجود؛ لن يُستبدل")
     idx = {"schema": SCHEMA, "title": a.title, "study_type": a.type, "discipline": a.discipline or "", "stage": "S0",
-           "created": now(), "updated": now(), "fragments": {}, "drafts": [], "gates": {}, "notes": {}}
+           "created": now(), "updated": now(), "fragments": {}, "drafts": [], "gates": {}, "notes": {},
+           "source_weights": {"institute_guide": 40, "complete_thesis": 40, "partial_thesis": 20}}
     with lock(p.root):
         for n, t in FRAGMENTS.items():
             p.store(idx, n, t())
@@ -192,7 +193,7 @@ def cmd_init(p, a):
 
 def cmd_show(p, a):
     idx = p.index()
-    print(json.dumps({k: idx[k] for k in ("schema", "title", "study_type", "discipline", "stage", "updated", "gates", "notes")}, ensure_ascii=False, indent=1))
+    print(json.dumps({k: idx[k] for k in ("schema", "title", "study_type", "discipline", "stage", "updated", "gates", "notes", "source_weights")}, ensure_ascii=False, indent=1))
     print("الشظايا:", {n: "v%d" % f["version"] for n, f in idx["fragments"].items()})
     print("المسودات:", [(d["name"], "v%d" % d["version"]) for d in idx["drafts"]])
 
@@ -215,7 +216,7 @@ def cmd_meta(p, a):
         if a.set:
             p.log(idx, "meta", a.set)
             p.save_index(idx)
-    print(json.dumps({k: idx[k] for k in ("title", "study_type", "discipline", "stage", "gates", "notes")}, ensure_ascii=False, indent=1))
+    print(json.dumps({k: idx[k] for k in ("title", "study_type", "discipline", "stage", "gates", "notes", "source_weights")}, ensure_ascii=False, indent=1))
 
 
 def cmd_read(p, a):
@@ -327,6 +328,12 @@ def validate(p):
         return [str(e)], []
     if idx.get("schema") != SCHEMA:
         errs.append("إصدار مخطط غير مدعوم: %s (المدعوم %s)؛ لا تُصلح الشظايا يدوياً دون تأكيد" % (idx.get("schema"), SCHEMA))
+    expected_weights = {"institute_guide": 40, "complete_thesis": 40, "partial_thesis": 20}
+    weights = idx.get("source_weights")
+    if weights is None:
+        warns.append("الجواز القديم بلا source_weights؛ يُضاف افتراض الدليل 40/الرسالة الكاملة 40/الجزء الناقص 20 عند الإصدار التالي")
+    elif weights != expected_weights:
+        errs.append("أوزان المصادر غير مطابقة للإطار المعتمد: دليل المعهد 40/الرسالة الكاملة 40/الجزء الناقص 20")
     loaded = {}
     for n in FRAGMENTS:
         meta = idx.get("fragments", {}).get(n)

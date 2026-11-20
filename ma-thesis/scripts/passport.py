@@ -65,6 +65,15 @@ def now():
     return datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
+def gate_passed_by_user(decisions, gate):
+    required = "gate:%s:passed" % gate
+    return any(isinstance(d, dict)
+               and d.get("stage") == gate
+               and d.get("decision") == required
+               and d.get("by") == "user"
+               for d in decisions)
+
+
 def sha(b):
     return hashlib.sha256(b).hexdigest()
 
@@ -214,10 +223,21 @@ def cmd_meta(p, a):
                     raise PassportError("لا يمكن الانتقال إلى G-A وما بعدها قبل اجتياز بوابة G-A", 1)
                 if target > gb and idx["gates"].get("G-B") != "passed":
                     raise PassportError("لا يمكن الانتقال إلى G-B وما بعدها قبل اجتياز بوابة G-B", 1)
+                decisions = p.load("decisions")
+                if target > ga and not gate_passed_by_user(decisions, "G-A"):
+                    raise PassportError("لا يمكن الانتقال بعد G-A بلا قرار الباحث المسجّل لبوابة G-A", 1)
+                if target > gb and not gate_passed_by_user(decisions, "G-B"):
+                    raise PassportError("لا يمكن الانتقال بعد G-B بلا قرار الباحث المسجّل لبوابة G-B", 1)
             if k.startswith("gate.") and k[5:] in ("G-A", "G-B"):
                 gate = k[5:]
                 if v not in ("passed", "failed"):
                     raise PassportError("قيمة بوابة غير مسموح بها: %s (المسموح passed أو failed)" % gate, 1)
+                if v == "passed":
+                    if idx.get("stage") != gate:
+                        raise PassportError("لا يمكن اجتياز %s إلا والمرحلة الحالية هي %s" % (gate, gate), 1)
+                    decisions = p.load("decisions")
+                    if not gate_passed_by_user(decisions, gate):
+                        raise PassportError("بوابة %s تحتاج قرار الباحث المسجّل gate:%s:passed" % (gate, gate), 1)
             if k in ("title", "study_type", "discipline", "stage"):
                 idx[k] = v
             elif k.startswith("gate."):
@@ -280,8 +300,8 @@ def cmd_write(p, a):
                     if isinstance(evidence, dict):
                         if not evidence.get("text") or not evidence.get("page"):
                             raise PassportError("evidence_pages[%s] يحتاج text وpage" % field, 1)
-                    elif not evidence:
-                        raise PassportError("evidence_pages[%s] فارغ" % field, 1)
+                    else:
+                        raise PassportError("evidence_pages[%s] يجب أن يكون كائناً {text,page}" % field, 1)
                 checks = val.get("checks")
                 missing_checks = [] if isinstance(checks, dict) else ("V1", "V2", "V3", "V4", "V5", "V6")
                 if isinstance(checks, dict):
@@ -367,6 +387,10 @@ def validate(p):
     elif weights != expected_weights:
         errs.append("أوزان المصادر غير مطابقة للإطار المعتمد: دليل المعهد 40/الرسالة الكاملة 40/الجزء الناقص 20")
     gates = idx.get("gates", {})
+    try:
+        decisions_for_gates = p.load("decisions")
+    except Exception:
+        decisions_for_gates = []
     for gate in ("G-A", "G-B"):
         value = gates.get(gate)
         if value not in (None, "passed", "failed"):
@@ -378,8 +402,12 @@ def validate(p):
         current_stage = STAGES.index("S0")
     if current_stage > STAGES.index("G-A") and gates.get("G-A") != "passed":
         errs.append("تجاوز غير مسموح لبوابة G-A قبل S6 وما بعدها")
+    if gates.get("G-A") == "passed" and not gate_passed_by_user(decisions_for_gates, "G-A"):
+        errs.append("بوابة G-A passed بلا قرار الباحث المسجّل gate:G-A:passed")
     if current_stage > STAGES.index("G-B") and gates.get("G-B") != "passed":
         errs.append("تجاوز غير مسموح لبوابة G-B قبل S9")
+    if gates.get("G-B") == "passed" and not gate_passed_by_user(decisions_for_gates, "G-B"):
+        errs.append("بوابة G-B passed بلا قرار الباحث المسجّل gate:G-B:passed")
     loaded = {}
     for n in FRAGMENTS:
         meta = idx.get("fragments", {}).get(n)
@@ -428,8 +456,8 @@ def validate(p):
                     if isinstance(evidence, dict):
                         if not evidence.get("text") or not evidence.get("page"):
                             errs.append("مصدر %s evidence_pages[%s] يحتاج text وpage" % (sid, field))
-                    elif not evidence:
-                        errs.append("مصدر %s evidence_pages[%s] فارغ" % (sid, field))
+                    else:
+                        errs.append("مصدر %s evidence_pages[%s] يجب أن يكون كائناً text/page" % (sid, field))
             checks = s.get("checks")
             if not isinstance(checks, dict):
                 errs.append("مصدر %s verified ينقص checks V1–V6" % sid)

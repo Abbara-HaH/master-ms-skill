@@ -417,7 +417,12 @@ def main():
             return 2
         if not a.registry:
             a.registry = str(passport_dir / "data_registry.json")
-        if not pathlib.Path(a.registry).exists():
+        passport_registry = (passport_dir / "data_registry.json").resolve()
+        registry_path = pathlib.Path(a.registry).resolve()
+        if registry_path != passport_registry:
+            print("خطأ:", "تسليم نهائي يتطلب سجل الأرقام الداخلي للجواز: %s" % passport_registry, file=sys.stderr)
+            return 2
+        if not registry_path.exists():
             print("خطأ:", "تسليم نهائي يتطلب registry رقمي موجوداً: %s" % a.registry, file=sys.stderr)
             return 2
     try:

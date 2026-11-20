@@ -115,6 +115,8 @@
 | تسليم نهائي | `format_check --final` بدون `--registry` يخرج خطأ، ولا ينفذ تسليم نهائي |
 | اجتياز بوابة بلا قرار | `meta gate.G-A=passed` بلا قرار الباحث المسجل يُرفض |
 | evidence_pages نصية | المصدر verified بقيم نصية لـevidence_pages يُرفض؛ يتطلب كائن text/page لكل حقل |
+| قرار بوابة بلا ختم وقت | قرار gate:G-A:passed بلا t صالح يُرفض |
+| تسليم نهائي مرتبط بالجواز | `format_check --final --passport passport` يتطلب S9 وG-A/G-B وقرارات المستخدم وregistry رقمي |
 
 ## الأخطاء التي ظهرت أثناء البناء وأُصلحت
 

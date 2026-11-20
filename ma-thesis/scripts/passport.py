@@ -67,11 +67,22 @@ def now():
 
 def gate_passed_by_user(decisions, gate):
     required = "gate:%s:passed" % gate
-    return any(isinstance(d, dict)
-               and d.get("stage") == gate
-               and d.get("decision") == required
-               and d.get("by") == "user"
-               for d in decisions)
+    for d in decisions:
+        if not isinstance(d, dict):
+            continue
+        stamp = d.get("t")
+        if isinstance(stamp, str) and stamp:
+            try:
+                datetime.datetime.fromisoformat(stamp.replace("Z", "+00:00"))
+            except ValueError:
+                continue
+        else:
+            continue
+        if (d.get("stage") == gate
+                and d.get("decision") == required
+                and d.get("by") == "user"):
+            return True
+    return False
 
 
 def sha(b):
@@ -298,8 +309,12 @@ def cmd_write(p, a):
                     raise PassportError("verified ينقص حقول الأدلة: " + "، ".join(missing_fields), 1)
                 for field, evidence in ep.items():
                     if isinstance(evidence, dict):
-                        if not evidence.get("text") or not evidence.get("page"):
-                            raise PassportError("evidence_pages[%s] يحتاج text وpage" % field, 1)
+                        text = evidence.get("text")
+                        page = evidence.get("page")
+                        if not isinstance(text, str) or not text.strip():
+                            raise PassportError("evidence_pages[%s].text يجب أن يكون نصاً غير فارغ" % field, 1)
+                        if not isinstance(page, (str, int)) or str(page).strip() == "":
+                            raise PassportError("evidence_pages[%s].page يجب أن يكون صفحة نصية أو رقمية" % field, 1)
                     else:
                         raise PassportError("evidence_pages[%s] يجب أن يكون كائناً {text,page}" % field, 1)
                 checks = val.get("checks")
@@ -454,8 +469,12 @@ def validate(p):
                     errs.append("مصدر %s verified ينقص حقول الأدلة: %s" % (sid, "، ".join(missing_fields)))
                 for field, evidence in ep.items():
                     if isinstance(evidence, dict):
-                        if not evidence.get("text") or not evidence.get("page"):
-                            errs.append("مصدر %s evidence_pages[%s] يحتاج text وpage" % (sid, field))
+                        text = evidence.get("text")
+                        page = evidence.get("page")
+                        if not isinstance(text, str) or not text.strip():
+                            errs.append("مصدر %s evidence_pages[%s].text يجب أن يكون نصاً غير فارغ" % (sid, field))
+                        if not isinstance(page, (str, int)) or str(page).strip() == "":
+                            errs.append("مصدر %s evidence_pages[%s].page يجب أن يكون صفحة نصية أو رقمية" % (sid, field))
                     else:
                         errs.append("مصدر %s evidence_pages[%s] يجب أن يكون كائناً text/page" % (sid, field))
             checks = s.get("checks")

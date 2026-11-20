@@ -13,7 +13,7 @@
 [اجتهاد]: تقدير الصفحات من الكلمات (WORDS_PER_PAGE) تقريبي؛ الصفحات الحقيقية تُقاس في Word.
 الخروج: 1 عند أي ERROR، 0 غير ذلك، 2 خطأ في المدخلات.
 """
-import argparse, json, pathlib, re, sys
+import argparse, datetime, json, pathlib, re, sys
 
 AR = r"\u0621-\u064A"
 DIAC = re.compile("[\u064B-\u0652\u0670\u0640]")
@@ -351,11 +351,58 @@ def main():
     ap.add_argument("--json", action="store_true")
     ap.add_argument("--final", action="store_true", help="معاملة المسودة كمخرج نهائي؛ أي فراغ مفتوح خطأ تسليم")
     ap.add_argument("--registry", help="passport/data_registry.json لفحص H2: أرقام النص مقابل ما قدمه الباحث")
+    ap.add_argument("--passport", default="passport", help="مسار جواز المشروع لفحص البوابات عند التسليم النهائي")
     a = ap.parse_args()
-    if a.final and not a.registry:
-        rep_hint = "تسليم نهائي يتطلب --registry passport/data_registry.json لتدقيق الأرقام"
-        print("خطأ:", rep_hint, file=sys.stderr)
-        return 2
+    if a.final:
+        passport_dir = pathlib.Path(a.passport)
+        passport_index = passport_dir / "index.json"
+        if not passport_index.exists():
+            print("خطأ:", "تسليم نهائي يتطلب جوازاً موجوداً في %s" % passport_dir, file=sys.stderr)
+            return 2
+        try:
+            idx = json.loads(passport_index.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as e:
+            print("خطأ:", "تعذر قراءة جواز التسليم: %s" % e, file=sys.stderr)
+            return 2
+        gates = idx.get("gates", {})
+        if gates.get("G-A") != "passed" or gates.get("G-B") != "passed":
+            print("خطأ:", "تسليم نهائي يتطلب اجتياز G-A وG-B المسجلين في الجواز", file=sys.stderr)
+            return 2
+        if idx.get("stage") != "S9":
+            print("خطأ:", "تسليم نهائي يتطلب stage=S9 في الجواز", file=sys.stderr)
+            return 2
+        decisions_path = passport_dir / "decisions.json"
+        if not decisions_path.exists():
+            print("خطأ:", "تسليم نهائي يتطلب decisions.json بأقرارَي المستخدم", file=sys.stderr)
+            return 2
+        try:
+            decisions = json.loads(decisions_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as e:
+            print("خطأ:", "تعذر قراءة قرارات البوابات: %s" % e, file=sys.stderr)
+            return 2
+        for gate in ("G-A", "G-B"):
+            valid = False
+            for decision in decisions if isinstance(decisions, list) else []:
+                stamp = decision.get("t") if isinstance(decision, dict) else None
+                if not isinstance(stamp, str):
+                    continue
+                try:
+                    datetime.datetime.fromisoformat(stamp.replace("Z", "+00:00"))
+                except ValueError:
+                    continue
+                if (decision.get("stage") == gate
+                        and decision.get("decision") == ("gate:%s:passed" % gate)
+                        and decision.get("by") == "user"):
+                    valid = True
+                    break
+            if not valid:
+                print("خطأ:", "تسليم نهائي يتطلب قرار الباحث الموثق لبوابة %s" % gate, file=sys.stderr)
+                return 2
+        if not a.registry:
+            a.registry = str(passport_dir / "data_registry.json")
+        if not pathlib.Path(a.registry).exists():
+            print("خطأ:", "تسليم نهائي يتطلب registry رقمي موجوداً: %s" % a.registry, file=sys.stderr)
+            return 2
     try:
         text = pathlib.Path(a.file).read_text(encoding="utf-8")
     except FileNotFoundError:

@@ -237,6 +237,62 @@ def check_refs(text, rep):
     rep.add("WARN" if unused else "OK", "المراجع", "مراجع غير مستشهد بها في المتن (%d)%s [مطابقة تقريبية]" % (len(unused), (": " + "؛ ".join("%s %s" % c for c in unused[:5])) if unused else ""), "G15:1600")
 
 
+def check_citation_section_rules(text, rep):
+    """H13/H14/H15: يمنع الاستشهادات في الأقسام المحميّة وتكرار المصدر نفسه داخل فقرة قصيرة."""
+    protected = ("مشكلة", "المشكلة", "مقدمة", "اهمية", "الأهمية", "اهداف", "الأهداف", "اسئلة", "الأسئلة",
+                 "فرضيات", "الفرضيات", "الحدود", "حدود", "الخاتمة", "التوصيات", "ملخص")
+    found = []
+    repeated = []
+
+    for level, heading, body in sections(text):
+        hn = norm(heading)
+        if any(name in hn for name in protected):
+            citation_count = len(CIT.findall(body)) + len(NARR.findall(body))
+            if citation_count:
+                found.append("%s: %d" % (heading, citation_count))
+
+    for para in re.split(r"\n\s*\n", re.sub(r"^#{1,6}\s.*$", "", text, flags=re.M)):
+        if not para.strip():
+            continue
+        if len(words(para)) > 150:
+            continue
+        keys = []
+        for m in CIT.finditer(para):
+            surname = norm(m.group(1).strip().split()[0]) if m.group(1).strip() else ""
+            if surname:
+                keys.append((surname, m.group(2)))
+        for m in NARR.finditer(para):
+            surname = norm(m.group(1).strip().split()[0]) if m.group(1).strip() else ""
+            if surname:
+                keys.append((surname, m.group(2)))
+        if len(keys) != len(set(keys)):
+            repeated.append(" ".join(para.split())[:90])
+
+    rep.add("ERROR" if found else "OK", "الأقسام بلا مراجع (H13)",
+            ("استشهادات في أقسام محمية: " + "؛ ".join(found)) if found else "لا استشهادات في أقسام الباحث المحمية",
+            "G06/G07/G08/G13؛ H13")
+    rep.add("ERROR" if repeated else "OK", "تكرار المرجع في الفقرة (H14)",
+            ("%d فقرة كررت مرجعاً بعينه" % len(repeated))
+            + (("؛ أمثلة: " + " | ".join(repeated[:3])) if repeated else ""),
+            "H14")
+
+
+def check_gap_protocol(text, kind, rep):
+    """H16: في ناتج نهائي لا يُترك فراغ مفتوح دون سؤال وحزمة مكتملة في المحادثة."""
+    ph = PLACE.findall(text)
+    if not ph:
+        rep.add("OK", "الفراغات (H16)", "لا فراغات موسومة مفتوحة", "H16")
+        return
+    if kind == "thesis":
+        rep.add("ERROR", "الفراغات (H16)",
+                "%d فراغاً مفتوحاً في مخرج نهائي؛ يسأل الباحث عنها أو يسجّلها كقيد معلن قبل التسليم" % len(ph),
+                "H16")
+    else:
+        rep.add("WARN", "الفراغات (H16)",
+                "%d فراغاً موسوماً في مسودة غير نهائية؛ الإجابة تُجمع قبل المرحلة التالية" % len(ph),
+                "H16")
+
+
 def registry_numbers(path):
     """كل الأرقام الواردة في data_registry.json (أي عمق) كنصوص موحّدة."""
     data = json.loads(pathlib.Path(path).read_text(encoding="utf-8"))
@@ -309,10 +365,11 @@ def main():
     else:
         check_chapters(text, rep); check_abstract(text, rep); check_tables_figures(text, rep)
         check_quotes(text, rep); check_refs(text, rep)
+        check_citation_section_rules(text, rep)
     if a.registry:
         check_numbers(text, a.registry, rep)
     ph = len(PLACE.findall(text))
-    rep.add("INFO", "فراغات", "%d فراغاً موسوماً ما زال مفتوحاً" % ph, "H2/H1")
+    check_gap_protocol(text, a.kind, rep)
     err = sum(1 for i in rep.items if i["level"] == "ERROR")
     out = {"status": "FAIL" if err else "PASS", "errors": err, "items": rep.items,
            "note": "فحص تقريبي للنص المكتوب؛ الخطوط والهوامش والتباعد وترقيم الصفحات تُراجع يدوياً في Word (G03:158–165)."}

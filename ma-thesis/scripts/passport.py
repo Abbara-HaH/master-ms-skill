@@ -27,6 +27,7 @@ FRAGMENTS = {  # اسم → نوع الحاوية
 }
 SOURCE_STATUS = {"verified", "partial", "needs_user_text", "unverifiable", "rejected", "candidate"}
 STAGES = ["S0", "S1", "S2", "S3", "S4", "S5", "G-A", "S6", "S7", "S8", "G-B", "S9"]
+EVIDENCE_FIELDS = ("goal", "method", "sample", "instrument", "results", "conclusion")
 FORBIDDEN_KEY = re.compile(r"(password|passwd|secret|api[_-]?key|token|كلمة[\s_]?(?:ال)?مرور)", re.I)
 EMAIL = re.compile(r"[\w.+-]+@[\w-]+\.[\w.-]+")
 PHONE = re.compile(r"(?<!\d)\+?\d[\d\s\-]{8,}\d(?!\d)")
@@ -205,6 +206,18 @@ def cmd_meta(p, a):
             k, _, v = kv.partition("=")
             if k == "stage" and v not in STAGES:
                 raise PassportError("مرحلة غير معروفة: %s (%s)" % (v, "، ".join(STAGES)))
+            if k == "stage":
+                target = STAGES.index(v)
+                ga = STAGES.index("G-A")
+                gb = STAGES.index("G-B")
+                if target > ga and idx["gates"].get("G-A") != "passed":
+                    raise PassportError("لا يمكن الانتقال إلى G-A وما بعدها قبل اجتياز بوابة G-A", 1)
+                if target > gb and idx["gates"].get("G-B") != "passed":
+                    raise PassportError("لا يمكن الانتقال إلى G-B وما بعدها قبل اجتياز بوابة G-B", 1)
+            if k.startswith("gate.") and k[5:] in ("G-A", "G-B"):
+                gate = k[5:]
+                if v not in ("passed", "failed"):
+                    raise PassportError("قيمة بوابة غير مسموح بها: %s (المسموح passed أو failed)" % gate, 1)
             if k in ("title", "study_type", "discipline", "stage"):
                 idx[k] = v
             elif k.startswith("gate."):
@@ -257,6 +270,25 @@ def cmd_write(p, a):
                 miss = [k for k in ("title", "authors", "year", "pdf_url", "evidence_pages") if not val.get(k)]
                 if miss:
                     raise PassportError("verified يتطلب (H1): " + "، ".join(miss), 1)
+                ep = val.get("evidence_pages")
+                if not isinstance(ep, dict):
+                    raise PassportError("verified يحتاج evidence_pages ككائن حقول الستة", 1)
+                missing_fields = [field for field in EVIDENCE_FIELDS if field not in ep]
+                if missing_fields:
+                    raise PassportError("verified ينقص حقول الأدلة: " + "، ".join(missing_fields), 1)
+                for field, evidence in ep.items():
+                    if isinstance(evidence, dict):
+                        if not evidence.get("text") or not evidence.get("page"):
+                            raise PassportError("evidence_pages[%s] يحتاج text وpage" % field, 1)
+                    elif not evidence:
+                        raise PassportError("evidence_pages[%s] فارغ" % field, 1)
+                checks = val.get("checks")
+                missing_checks = [] if isinstance(checks, dict) else ("V1", "V2", "V3", "V4", "V5", "V6")
+                if isinstance(checks, dict):
+                    missing_checks = [key for key in ("V1", "V2", "V3", "V4", "V5", "V6")
+                                      if not isinstance(checks.get(key), dict) or checks[key].get("ok") is not True]
+                if missing_checks:
+                    raise PassportError("verified يحتاج checks ناجحة لكل من: " + "، ".join(missing_checks), 1)
                 pp = policy_problems(val)
                 if pp:
                     raise PassportError("لا يُقبل verified: " + "؛ ".join(pp) + " — استعمل rejected مع السبب", 1)
@@ -334,6 +366,20 @@ def validate(p):
         warns.append("الجواز القديم بلا source_weights؛ يُضاف افتراض الدليل 40/الرسالة الكاملة 40/الجزء الناقص 20 عند الإصدار التالي")
     elif weights != expected_weights:
         errs.append("أوزان المصادر غير مطابقة للإطار المعتمد: دليل المعهد 40/الرسالة الكاملة 40/الجزء الناقص 20")
+    gates = idx.get("gates", {})
+    for gate in ("G-A", "G-B"):
+        value = gates.get(gate)
+        if value not in (None, "passed", "failed"):
+            errs.append("بوابة %s بقيمة غير مسموح بها: %s" % (gate, value))
+    try:
+        current_stage = STAGES.index(idx.get("stage", "S0"))
+    except ValueError:
+        errs.append("مرحلة غير معروفة في الجواز")
+        current_stage = STAGES.index("S0")
+    if current_stage > STAGES.index("G-A") and gates.get("G-A") != "passed":
+        errs.append("تجاوز غير مسموح لبوابة G-A قبل S6 وما بعدها")
+    if current_stage > STAGES.index("G-B") and gates.get("G-B") != "passed":
+        errs.append("تجاوز غير مسموح لبوابة G-B قبل S9")
     loaded = {}
     for n in FRAGMENTS:
         meta = idx.get("fragments", {}).get(n)
@@ -371,6 +417,27 @@ def validate(p):
             miss = [k for k in ("title", "authors", "year", "pdf_url", "evidence_pages") if not s.get(k)]
             if miss:
                 errs.append("مصدر %s verified لكن ينقصه (H1): %s" % (sid, "، ".join(miss)))
+            ep = s.get("evidence_pages")
+            if not isinstance(ep, dict):
+                errs.append("مصدر %s verified يحتاج evidence_pages ككائن من حقول الستة" % sid)
+            else:
+                missing_fields = [field for field in EVIDENCE_FIELDS if field not in ep]
+                if missing_fields:
+                    errs.append("مصدر %s verified ينقص حقول الأدلة: %s" % (sid, "، ".join(missing_fields)))
+                for field, evidence in ep.items():
+                    if isinstance(evidence, dict):
+                        if not evidence.get("text") or not evidence.get("page"):
+                            errs.append("مصدر %s evidence_pages[%s] يحتاج text وpage" % (sid, field))
+                    elif not evidence:
+                        errs.append("مصدر %s evidence_pages[%s] فارغ" % (sid, field))
+            checks = s.get("checks")
+            if not isinstance(checks, dict):
+                errs.append("مصدر %s verified ينقص checks V1–V6" % sid)
+            else:
+                missing_checks = [key for key in ("V1", "V2", "V3", "V4", "V5", "V6")
+                                  if not isinstance(checks.get(key), dict) or checks[key].get("ok") is not True]
+                if missing_checks:
+                    errs.append("مصدر %s verified لم يجتز فحوصاً ناجحة: %s" % (sid, "، ".join(missing_checks)))
             for why in policy_problems(s):
                 errs.append("مصدر %s verified يخالف سياسة المصادر: %s" % (sid, why))
     for frag in ("sources", "claims", "lit_cards", "learned_rules"):

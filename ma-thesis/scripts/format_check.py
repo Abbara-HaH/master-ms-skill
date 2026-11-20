@@ -352,6 +352,10 @@ def main():
     ap.add_argument("--final", action="store_true", help="معاملة المسودة كمخرج نهائي؛ أي فراغ مفتوح خطأ تسليم")
     ap.add_argument("--registry", help="passport/data_registry.json لفحص H2: أرقام النص مقابل ما قدمه الباحث")
     a = ap.parse_args()
+    if a.final and not a.registry:
+        rep_hint = "تسليم نهائي يتطلب --registry passport/data_registry.json لتدقيق الأرقام"
+        print("خطأ:", rep_hint, file=sys.stderr)
+        return 2
     try:
         text = pathlib.Path(a.file).read_text(encoding="utf-8")
     except FileNotFoundError:

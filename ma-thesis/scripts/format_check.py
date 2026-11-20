@@ -13,7 +13,7 @@
 [اجتهاد]: تقدير الصفحات من الكلمات (WORDS_PER_PAGE) تقريبي؛ الصفحات الحقيقية تُقاس في Word.
 الخروج: 1 عند أي ERROR، 0 غير ذلك، 2 خطأ في المدخلات.
 """
-import argparse, datetime, json, pathlib, re, sys
+import argparse, datetime, json, pathlib, re, subprocess, sys
 
 AR = r"\u0621-\u064A"
 DIAC = re.compile("[\u064B-\u0652\u0670\u0640]")
@@ -398,6 +398,23 @@ def main():
             if not valid:
                 print("خطأ:", "تسليم نهائي يتطلب قرار الباحث الموثق لبوابة %s" % gate, file=sys.stderr)
                 return 2
+        passport_script = pathlib.Path(__file__).resolve().with_name("passport.py")
+        try:
+            validation = subprocess.run(
+                [sys.executable, str(passport_script), "--dir", str(passport_dir), "validate"],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+        except OSError as e:
+            print("خطأ:", "تعذر تشغيل passport validate: %s" % e, file=sys.stderr)
+            return 2
+        if validation.returncode != 0:
+            detail = (validation.stdout + validation.stderr).strip()
+            print("خطأ:", "الجواز يفشل passport validate ولا يجوز التسليم النهائي", file=sys.stderr)
+            if detail:
+                print(detail, file=sys.stderr)
+            return 2
         if not a.registry:
             a.registry = str(passport_dir / "data_registry.json")
         if not pathlib.Path(a.registry).exists():

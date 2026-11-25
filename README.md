@@ -15,6 +15,7 @@
 | المسار | الوظيفة |
 |---|---|
 | `ma-thesis/SKILL.md` | تعريف المهارة والأوامر والأحكام H1–H18 وسير الكتابة |
+| `ma-thesis/commands/` | مداخل أوامر Claude Code للإضافة، ومنها `/ma-thesis:full` |
 | `ma-thesis/references/guide/` | دليل المعهد المصدري G01–G16 بوزن مرجعي مقداره 40% |
 | `ma-thesis/references/` | قواعد سير العمل والنصوص والفقرات والفصول والدراسات السابقة والأنسنة |
 | `ma-thesis/agents/` | وكلاء التحقق والنقد والنزاهة |
@@ -24,7 +25,24 @@
 | `ma-thesis/tools/` | وحدة تشغيل الوكلاء في claude.ai |
 | `CHANGELOG.md` | سجل التحديثات والإصدارات |
 
-## تثبيت المهارة في Claude Code
+## تثبيت الإضافة في Claude Code
+
+أضف سوق المستودع ثم ثبّت إضافة `ma-thesis` من واجهة Claude Code:
+
+```text
+/plugin marketplace add Abbara-HaH/master-ms-skill
+/plugin install ma-thesis@master-ms-skill
+```
+
+مدخل الإضافة العام هو `/ma-thesis:ma-thesis`. ولتشغيل مسار كتابة الرسالة كاملة مباشرةً:
+
+```text
+/ma-thesis:full <عنوان البحث أو فكرته>
+```
+
+هذا الأمر يحمّل مباشرةً `SKILL.md` ومسار التأليف وخرائط الفصول ومعايرة الفقرات، ثم يتبع مراحل S0–S9 وبوابتي G-A وG-B. ويظل `/ma-thesis:ma-thesis full <العنوان>` مساراً مكافئاً. شغّل `python3 ma-thesis/scripts/validate_plugin.py` للتحقق من بقاء مدخلي الإضافة موصولين بهذه التعليمات. الفحص البنيوي لا يغني عن اختبار جلسة Claude Code فعلية.
+
+## تثبيت المهارة المستقلة في Claude Code
 
 من داخل مجلد المستودع:
 
@@ -38,19 +56,21 @@ bash ma-thesis/claude-code/install.sh
 bash ma-thesis/claude-code/install.sh --project
 ```
 
-بعد إعادة تشغيل Claude Code:
+بعد إعادة تشغيل Claude Code، يستمر هذا المثبّت المستقل باستخدام:
 
 ```text
 /ma-thesis
 ```
 
-لإزالة التثبيت:
+لإزالة هذا التثبيت المستقل:
 
 ```bash
 bash ma-thesis/claude-code/install.sh --uninstall
 ```
 
 ## الأوامر
+
+في التثبيت المستقل استخدم `/ma-thesis`؛ أما الإضافة المثبتة من السوق فتستخدم `/ma-thesis:full` للمسار الكامل أو `/ma-thesis:ma-thesis` للأوضاع الأخرى.
 
 | الأمر | النتيجة |
 |---|---|
